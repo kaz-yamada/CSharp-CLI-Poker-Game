@@ -237,6 +237,11 @@ namespace LensPokerGame
 
             FindPairs();
 
+            if (HandType == HandType.HighCard)
+            {
+                HighValue = Cards[4].FaceValue;
+            }
+
             return HandType;
         }
 
