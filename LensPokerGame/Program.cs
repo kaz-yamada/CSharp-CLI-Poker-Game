@@ -9,7 +9,13 @@ namespace LensPokerGame
             Deck deck = new Deck();
             Hand[] hands = new Hand[4];
 
-            deck.ShuffleDeck();
+            //deck.ShuffleDeck();
+
+            Hand str = new Hand();
+
+
+            str.PrintHand();
+            Console.WriteLine();
 
             for (int i = 0; i < hands.Length; i++)
             {

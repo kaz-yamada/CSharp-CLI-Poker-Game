@@ -91,15 +91,26 @@ namespace LensPokerGame
     class Hand
     {
         private const int HandSize = 5;
-        private Card[] Cards = new Card[HandSize];
+        private readonly Card[] Cards = new Card[HandSize];
         private readonly HashSet<Suit> Suits = new HashSet<Suit>();
-        private int HandType = 0;
-        private Dictionary<FaceValue, int> pairs = new Dictionary<FaceValue, int>();
-
-        private FaceValue HighValue;
-        private Suit HighSuit;
+        private readonly Dictionary<FaceValue, int> pairs = new Dictionary<FaceValue, int>();
+        public HandType HandType { get; private set; } = 0;
+        public FaceValue HighValue { get; private set; }
+        public Suit HighSuit { get; private set; }
 
         public static string[] HandTypeString = { "High Card", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush" };
+
+
+        public Hand()
+        {
+            Cards[0] = new Card(Suit.Clubs, FaceValue.Ten);
+            Cards[1] = new Card(Suit.Clubs, FaceValue.Jack);
+            Cards[2] = new Card(Suit.Clubs, FaceValue.Queen);
+            Cards[3] = new Card(Suit.Diamonds, FaceValue.King);
+            Cards[4] = new Card(Suit.Spades, FaceValue.Ace);
+            Array.Sort(Cards);
+            HandType = CheckHand();
+        }
 
         public Hand(Deck deck)
         {
@@ -130,37 +141,112 @@ namespace LensPokerGame
             {
                 Console.WriteLine(card.ToString());
             }
+
+            Console.WriteLine(HandTypeString[(int)HandType]);
         }
 
-        public int CheckHand()
+
+
+        /// <summary>
+        /// Checks if there is a straight in the hand 
+        /// </summary>
+        /// <returns></returns>
+        private bool IsStraight()
         {
-            bool isStraight = false;
-
-            for (int i = 0; i < HandSize; i++)
+            for (int i = 0; i < 4; i++)
             {
+                if (i == 3)
+                {
+                    // Checks if the hand is Ace high or low, straight cannot be high or low e.g QKA23 is an ace high hand
+                    if (Cards[i].FaceValue == FaceValue.Five)
+                    {
+                        return Cards[i + 1].FaceValue == FaceValue.Ace || Cards[i + 1].FaceValue == FaceValue.Six;
+                    }
+                    else if (Cards[i].FaceValue == FaceValue.King)
+                    {
+                        return Cards[i + 1].FaceValue == FaceValue.Ace;
+                    }
+                }
 
+
+                if ((int)Cards[i].FaceValue + 1 != (int)Cards[i + 1].FaceValue)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public HandType CheckHand()
+        {
+            bool HasStraight = IsStraight();
+
+            if (HasStraight)
+            {
+                HandType = HandType.Straight;
             }
 
             // Flush
             if (Suits.Count == 1)
             {
                 // Straight Flush
-                return isStraight ? 8 : 5;
+                return HasStraight ? HandType.StraightFlush : HandType.Flush;
             }
 
-            return 0;
+
+            // Check for pairs
+            foreach (KeyValuePair<FaceValue, int> pair in pairs)
+            {
+                if (HandType == HandType.HighCard)
+                {
+                    // One Pair
+                    if (pair.Value == 2)
+                    {
+                        HandType = HandType.OnePair;
+                    }
+
+                    // Three of a Kind
+                    if (pair.Value == 3)
+                    {
+                        HandType = HandType.ThreeOfAKind;
+                    }
+
+                    if (pair.Value == 4)
+                    {
+                        HandType = HandType.FourOfAKind;
+                    }
+                }
+                else if (HandType == HandType.OnePair)
+                {
+                    // Two Pair
+                    if (pair.Value == 2)
+                    {
+                        HandType = HandType.TwoPair;
+                    }
+
+                    // Full house
+                    if (pair.Value == 3)
+                    {
+                        HandType = HandType.FullHouse;
+                    }
+                }
+                else if (HandType == HandType.ThreeOfAKind && pair.Value == 3)
+                {
+                    HandType = HandType.FullHouse;
+                }
+            }
+            return HandType;
         }
-
-
 
         public static bool operator >(Hand hand1, Hand hand2)
         {
-            return hand1.CheckHand() > hand2.CheckHand();
+            return hand1.HandType > hand2.HandType;
         }
 
         public static bool operator <(Hand hand1, Hand hand2)
         {
-            return hand1.CheckHand() < hand2.CheckHand();
+            return hand1.HandType < hand2.HandType;
         }
     }
 }
