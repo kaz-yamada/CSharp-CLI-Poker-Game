@@ -86,6 +86,9 @@ namespace LensPokerGame
             return FaceValue - other.FaceValue;
         }
 
+
+        public static bool operator >(Card card1, Card card2) => card1.FaceValue > card2.FaceValue;
+        public static bool operator <(Card card1, Card card2) => card1.FaceValue < card2.FaceValue;
     }
 
     class Hand
@@ -96,21 +99,9 @@ namespace LensPokerGame
         private readonly Dictionary<FaceValue, int> pairs = new Dictionary<FaceValue, int>();
         public HandType HandType { get; private set; } = 0;
         public FaceValue HighValue { get; private set; }
-        public Suit HighSuit { get; private set; }
 
         public static string[] HandTypeString = { "High Card", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush" };
 
-
-        public Hand()
-        {
-            Cards[0] = new Card(Suit.Clubs, FaceValue.Ten);
-            Cards[1] = new Card(Suit.Clubs, FaceValue.Jack);
-            Cards[2] = new Card(Suit.Clubs, FaceValue.Queen);
-            Cards[3] = new Card(Suit.Diamonds, FaceValue.King);
-            Cards[4] = new Card(Suit.Spades, FaceValue.Ace);
-            Array.Sort(Cards);
-            HandType = CheckHand();
-        }
 
         public Hand(Deck deck)
         {
@@ -131,7 +122,6 @@ namespace LensPokerGame
                 Suits.Add(Cards[i].Suit);
             }
             Array.Sort(Cards);
-
             HandType = CheckHand();
         }
 
@@ -142,9 +132,8 @@ namespace LensPokerGame
                 Console.WriteLine(card.ToString());
             }
 
-            Console.WriteLine(HandTypeString[(int)HandType]);
+            Console.WriteLine("{0} - {1}", HandTypeString[(int)HandType], HighValue);
         }
-
 
 
         /// <summary>
@@ -178,26 +167,22 @@ namespace LensPokerGame
             return true;
         }
 
-        public HandType CheckHand()
+        private void FindPairs()
         {
-            bool HasStraight = IsStraight();
-
-            if (HasStraight)
-            {
-                HandType = HandType.Straight;
-            }
-
-            // Flush
-            if (Suits.Count == 1)
-            {
-                // Straight Flush
-                return HasStraight ? HandType.StraightFlush : HandType.Flush;
-            }
-
-
             // Check for pairs
             foreach (KeyValuePair<FaceValue, int> pair in pairs)
             {
+                if (pair.Value > 1 && pair.Key > HighValue)
+                {
+                    HighValue = pair.Key;
+                }
+
+                if (pair.Value == 4)
+                {
+                    HandType = HandType.FourOfAKind;
+                    return;
+                }
+
                 if (HandType == HandType.HighCard)
                 {
                     // One Pair
@@ -210,11 +195,6 @@ namespace LensPokerGame
                     if (pair.Value == 3)
                     {
                         HandType = HandType.ThreeOfAKind;
-                    }
-
-                    if (pair.Value == 4)
-                    {
-                        HandType = HandType.FourOfAKind;
                     }
                 }
                 else if (HandType == HandType.OnePair)
@@ -236,17 +216,37 @@ namespace LensPokerGame
                     HandType = HandType.FullHouse;
                 }
             }
+
+        }
+
+        public HandType CheckHand()
+        {
+            bool HasStraight = IsStraight();
+
+            if (HasStraight)
+            {
+                HandType = HandType.Straight;
+            }
+
+            // Flush
+            if (Suits.Count == 1)
+            {
+                // Straight Flush
+                return HasStraight ? HandType.StraightFlush : HandType.Flush;
+            }
+
+            FindPairs();
+
             return HandType;
         }
 
         public static bool operator >(Hand hand1, Hand hand2)
         {
-            return hand1.HandType > hand2.HandType;
+            return hand1.HighValue > hand2.HighValue;
         }
-
         public static bool operator <(Hand hand1, Hand hand2)
         {
-            return hand1.HandType < hand2.HandType;
+            return hand1.HighValue < hand2.HighValue;
         }
     }
 }
