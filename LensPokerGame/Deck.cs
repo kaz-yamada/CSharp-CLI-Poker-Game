@@ -87,8 +87,25 @@ namespace LensPokerGame
         }
 
 
-        public static bool operator >(Card card1, Card card2) => card1.FaceValue > card2.FaceValue;
-        public static bool operator <(Card card1, Card card2) => card1.FaceValue < card2.FaceValue;
+        public static bool operator >(Card card1, Card card2)
+        {
+            if (card1.FaceValue == card2.FaceValue)
+            {
+                return card1.Suit > card2.Suit;
+            }
+
+            return card1.FaceValue > card2.FaceValue;
+        }
+
+        public static bool operator <(Card card1, Card card2)
+        {
+            if (card1.FaceValue == card2.FaceValue)
+            {
+                return card1.Suit < card2.Suit;
+            }
+
+            return card1.FaceValue < card2.FaceValue;
+        }
     }
 
     class Hand
@@ -97,11 +114,11 @@ namespace LensPokerGame
         private readonly Card[] Cards = new Card[HandSize];
         private readonly HashSet<Suit> Suits = new HashSet<Suit>();
         private readonly Dictionary<FaceValue, int> pairs = new Dictionary<FaceValue, int>();
+        private readonly bool HasPair = false;
         public HandType HandType { get; private set; } = 0;
         public FaceValue HighValue { get; private set; }
 
         public static string[] HandTypeString = { "High Card", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush" };
-
 
         public Hand(Deck deck)
         {
@@ -113,6 +130,7 @@ namespace LensPokerGame
                 if (pairs.ContainsKey(val))
                 {
                     pairs[val]++;
+                    HasPair = true;
                 }
                 else
                 {
@@ -122,7 +140,7 @@ namespace LensPokerGame
                 Suits.Add(Cards[i].Suit);
             }
             Array.Sort(Cards);
-            HandType = CheckHand();
+            CheckHandType();
         }
 
         public void PrintHand()
@@ -219,7 +237,7 @@ namespace LensPokerGame
 
         }
 
-        public HandType CheckHand()
+        public void CheckHandType()
         {
             bool HasStraight = IsStraight();
 
@@ -227,31 +245,48 @@ namespace LensPokerGame
             {
                 HandType = HandType.Straight;
             }
-
-            // Flush
-            if (Suits.Count == 1)
+            else if (HasPair)
             {
-                // Straight Flush
-                return HasStraight ? HandType.StraightFlush : HandType.Flush;
+                FindPairs();
             }
 
-            FindPairs();
+            // Hand is a flush
+            if (Suits.Count == 1)
+            {
+                // Check for royal straight flush
+                if (HasStraight)
+                {
+                    if (Cards[0].FaceValue == FaceValue.Ten && Cards[4].FaceValue == FaceValue.Ace)
+                    {
+                        HandType = HandType.RoyalFlush;
+                    }
+                    HandType = HandType.StraightFlush;
+                }                
+            }
 
             if (HandType == HandType.HighCard)
             {
                 HighValue = Cards[4].FaceValue;
-            }
-
-            return HandType;
+            }            
         }
 
         public static bool operator >(Hand hand1, Hand hand2)
         {
-            return hand1.HighValue > hand2.HighValue;
+            if (hand1.HandType == hand2.HandType)
+            {
+                return hand1.HighValue > hand2.HighValue;
+            }
+            
+            return hand1.HandType > hand2.HandType;
         }
         public static bool operator <(Hand hand1, Hand hand2)
         {
-            return hand1.HighValue < hand2.HighValue;
+            if (hand1.HandType == hand2.HandType)
+            {
+                return hand1.HighValue < hand2.HighValue;
+            }
+
+            return hand1.HandType < hand2.HandType;
         }
     }
 }

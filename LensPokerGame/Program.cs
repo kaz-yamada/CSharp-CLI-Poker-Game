@@ -8,7 +8,7 @@ namespace LensPokerGame
         {
             Deck deck = new Deck();
             Hand[] hands = new Hand[4];
-            Hand winner = null;
+            int winner = -1;            
 
             deck.ShuffleDeck();
 
@@ -19,14 +19,14 @@ namespace LensPokerGame
                 hands[i].PrintHand();
                 Console.WriteLine();
 
-                if (winner == null || hands[i] > winner)
+                if (winner < 0 || hands[i] > hands[winner])
                 {
-                    winner = hands[i];
+                    winner = i;
                 }
             }
 
-            Console.WriteLine("-------------------\nWinning Hand:\n");
-            winner.PrintHand();
+            Console.WriteLine("-------------------\nWinning Hand number {0}:\n", winner + 1);
+            hands[winner].PrintHand();
         }
     }
 }
