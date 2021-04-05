@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace LensPokerGame
 {
@@ -8,15 +7,19 @@ namespace LensPokerGame
     public enum FaceValue { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace };
     public enum HandType { HighCard, OnePair, TwoPair, ThreeOfAKind, Straight, Flush, FullHouse, FourOfAKind, StraightFlush, RoyalFlush };
 
-    class Deck
+    class Game
     {
         private const int Size = 52;
         private readonly Card[] Cards = new Card[Size];
+        private Hand[] Hands;
+        private int PlayerCount;
+        private int WinnerIndex;
 
-        public Deck()
+        public Game(int count = 4)
         {
             int index = 0;
-
+            PlayerCount = count;
+            Hands = new Hand[4];
             foreach (Suit suit in Enum.GetValues(typeof(Suit)))
             {
                 foreach (FaceValue face in Enum.GetValues(typeof(FaceValue)))
@@ -46,6 +49,30 @@ namespace LensPokerGame
                 Cards[n] = Cards[k];
                 Cards[k] = temp;
             }
+        }
+
+        public void StartGame()
+        {
+            ShuffleDeck();
+
+            for (int i = 0; i < PlayerCount; i++)
+            {
+                Hands[i] = new Hand(this);
+                Console.WriteLine("Hand {0}", i + 1);
+                Hands[i].PrintHand();
+                Console.WriteLine();
+
+                if (WinnerIndex < 0 || Hands[i] > Hands[WinnerIndex])
+                {
+                    WinnerIndex = i;
+                }
+            }
+        }
+
+        public void PrintWinner()
+        {
+            Console.WriteLine("-------------------\nWinning Hand number {0}:\n", WinnerIndex + 1);
+            Hands[WinnerIndex].PrintHand();
         }
 
         public Card DrawCard()
@@ -120,7 +147,7 @@ namespace LensPokerGame
 
         public static string[] HandTypeString = { "High Card", "One Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush" };
 
-        public Hand(Deck deck)
+        public Hand(Game deck)
         {
             for (int i = 0; i < HandSize; i++)
             {
@@ -261,13 +288,13 @@ namespace LensPokerGame
                         HandType = HandType.RoyalFlush;
                     }
                     HandType = HandType.StraightFlush;
-                }                
+                }
             }
 
             if (HandType == HandType.HighCard)
             {
                 HighValue = Cards[4].FaceValue;
-            }            
+            }
         }
 
         public static bool operator >(Hand hand1, Hand hand2)
@@ -276,7 +303,7 @@ namespace LensPokerGame
             {
                 return hand1.HighValue > hand2.HighValue;
             }
-            
+
             return hand1.HandType > hand2.HandType;
         }
         public static bool operator <(Hand hand1, Hand hand2)
